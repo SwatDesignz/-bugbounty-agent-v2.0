@@ -1,0 +1,5 @@
+{
+  "scope": "*.bankapp.com",
+  "http_response": "HTTP/1.1 200 OK\r\nSet-Cookie: session=abc123; Path=/\r\nContent-Security-Policy: absent",
+  "scanner_hits": "Nuclei found 17 medium issues"
+}

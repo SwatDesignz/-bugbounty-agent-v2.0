@@ -1,0 +1,10 @@
+{
+  "name": "bugbounty-pro-deploy",
+  "version": "2.0.0",
+  "scripts": {
+    "deploy": "node deploy-openai.js"
+  },
+  "dependencies": {
+    "openai": "^4.0.0"
+  }
+}
