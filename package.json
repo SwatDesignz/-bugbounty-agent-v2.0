@@ -2,9 +2,14 @@
   "name": "bugbounty-pro-deploy",
   "version": "2.0.0",
   "scripts": {
-    "deploy": "node deploy-openai.js"
+    "cli": "node cli.js",
+    "deploy:claude": "node deploy-claude.js",
+    "deploy:openai": "node deploy-openai.js",
+    "deploy": "node deploy-claude.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.0",
+    "dotenv": "^16.0.0",
     "openai": "^4.0.0"
   }
 }
