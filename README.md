@@ -52,6 +52,20 @@ Target: *.bankapp.com
 
 ---
 
+
+## Training Mode (TryHackMe API)
+
+```bash
+npm run train:tryhackme
+```
+
+Fetches recent TryHackMe rooms and prints a small training shortlist for legal practice environments. You can override:
+
+- `TRYHACKME_API_NEW_ROOMS_URL` (default: `https://tryhackme.com/api/new-rooms`)
+- `TRYHACKME_MAX_ROOMS` (default: `5`)
+
+---
+
 ## Alternative: Deploy to OpenAI Assistants
 
 ```bash
