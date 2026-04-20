@@ -1,0 +1,10 @@
+# Environment variables — never commit real API keys
+.env
+
+# Auto-created runtime directories
+sessions/
+evidence/
+
+# Node
+node_modules/
+npm-debug.log*
