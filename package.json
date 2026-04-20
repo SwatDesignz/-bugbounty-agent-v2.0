@@ -5,7 +5,9 @@
     "cli": "node cli.js",
     "deploy:claude": "node deploy-claude.js",
     "deploy:openai": "node deploy-openai.js",
-    "deploy": "node deploy-claude.js"
+    "deploy": "node deploy-claude.js",
+    "train:tryhackme": "node train-tryhackme.js",
+    "test": "node --test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.36.0",
