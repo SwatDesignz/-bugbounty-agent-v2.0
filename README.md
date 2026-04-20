@@ -31,6 +31,8 @@ That's it. No external deployment needed — runs locally against the Claude API
 | `/file <path>` | Load a file as input (Burp exports, Nuclei output, JS files, etc.) |
 | `/save` | Save the current session to `./sessions/` |
 | `/clear` | Clear conversation history |
+| `/evidence list` | List all recorded vulnerability findings |
+| `/evidence <JSON>` | Log a finding as structured evidence |
 | `/help` | Show help |
 | `/quit` | Exit |
 
@@ -48,7 +50,45 @@ Target: *.bankapp.com
 > /file nuclei-results.json
 
 > What CSRF vectors are realistic given the Angular frontend?
+
+> /evidence {"title":"Session cookie missing HttpOnly","severity":"medium","scope":"*.bankapp.com","evidence":"Set-Cookie: session=abc; Path=/","status":"confirmed"}
+
+Finding recorded: /path/to/evidence/finding-1234567890-1.json
+  Title: Session cookie missing HttpOnly  Severity: MEDIUM  Status: confirmed
+
+> /evidence list
+
+Recorded Findings (1):
+  1. [MEDIUM] Session cookie missing HttpOnly — confirmed — *.bankapp.com
 ```
+
+---
+
+
+## Evidence Recording
+
+Log confirmed vulnerability findings as structured JSON records during a session:
+
+```
+> /evidence {"title":"Reflected XSS","severity":"high","scope":"app.example.com","evidence":"param reflected unescaped","status":"confirmed"}
+> /evidence list
+```
+
+Or log from the command line (outside a session):
+
+```bash
+npm run vuln:log -- '{"title":"IDOR","severity":"high","scope":"api.example.com/users","status":"confirmed"}'
+```
+
+Records are saved to `./evidence/` as individual `.json` files with fields:
+
+| Field | Required | Values |
+|---|---|---|
+| `title` | ✅ | Short descriptive name |
+| `severity` | ✅ | `critical` / `high` / `medium` / `low` / `info` |
+| `scope` | ✗ | In-scope asset (URL, domain, endpoint) |
+| `evidence` | ✗ | Raw evidence (headers, params, responses) |
+| `status` | ✗ | `confirmed` / `likely` / `potential` / `informational` / `unconfirmed` (default) |
 
 ---
 
@@ -104,10 +144,13 @@ Tests the Anthropic API key and verifies the agent responds correctly before sta
 ├── cli.js              # Interactive Claude CLI (primary interface)
 ├── deploy-claude.js    # Validates Claude API connection
 ├── deploy-openai.js    # Deploys to OpenAI Assistants
+├── evidence.js         # Structured vulnerability evidence recording
 ├── SYSTEM_PROMPT.md    # Core agent instructions (268 lines)
 ├── example-input.json  # Sample vulnerability analysis input
 ├── .env.example        # Environment variable template
-└── sessions/           # Auto-created: saved conversation sessions
+├── .github/workflows/  # CI — runs tests on push/PR
+├── sessions/           # Auto-created: saved conversation sessions
+└── evidence/           # Auto-created: logged vulnerability findings
 ```
 
 ---

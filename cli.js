@@ -19,6 +19,7 @@ const Anthropic = require("@anthropic-ai/sdk");
 const fs = require("fs");
 const readline = require("readline");
 const path = require("path");
+const { logFinding, listFindings } = require("./evidence");
 
 try {
   require("dotenv").config();
@@ -72,7 +73,7 @@ function printBanner() {
   console.log("\x1b[0m");
   console.log(`Model: \x1b[36m${MODEL}\x1b[0m with adaptive thinking`);
   console.log(
-    "Commands: \x1b[33m/help\x1b[0m  \x1b[33m/file <path>\x1b[0m  \x1b[33m/save\x1b[0m  \x1b[33m/clear\x1b[0m  \x1b[33m/quit\x1b[0m\n"
+    "Commands: \x1b[33m/help\x1b[0m  \x1b[33m/file <path>\x1b[0m  \x1b[33m/save\x1b[0m  \x1b[33m/clear\x1b[0m  \x1b[33m/evidence\x1b[0m  \x1b[33m/quit\x1b[0m\n"
   );
   console.log(
     "Paste scope, HTTP responses, headers, cookies, or scanner output below.\n"
@@ -81,16 +82,24 @@ function printBanner() {
 
 function printHelp() {
   console.log("\n\x1b[33mAvailable Commands:\x1b[0m");
-  console.log("  /help            Show this help");
-  console.log("  /file <path>     Load file content as context (Burp exports,");
-  console.log("                   Nuclei output, JS files, etc.)");
-  console.log("  /save            Save session to ./sessions/");
-  console.log("  /clear           Clear conversation history (start fresh)");
-  console.log("  /quit            Exit");
+  console.log("  /help                       Show this help");
+  console.log("  /file <path>                Load file content as context (Burp exports,");
+  console.log("                              Nuclei output, JS files, etc.)");
+  console.log("  /save                       Save session to ./sessions/");
+  console.log("  /clear                      Clear conversation history (start fresh)");
+  console.log("  /evidence list              List all recorded vulnerability findings");
+  console.log("  /evidence <JSON>            Log a finding (requires title + severity)");
+  console.log('                              e.g. /evidence {"title":"XSS","severity":"high",');
+  console.log('                                              "scope":"app.example.com",');
+  console.log('                                              "evidence":"param reflected raw"}');
+  console.log("  /quit                       Exit");
   console.log("\n\x1b[33mTips:\x1b[0m");
   console.log("  • Paste HTTP responses or headers directly at the prompt.");
   console.log(
     "  • Use /file to load large files (e.g., nuclei-results.json)."
+  );
+  console.log(
+    "  • Use /evidence to record confirmed findings as structured JSON evidence."
   );
   console.log(
     "  • Conversation history is preserved — build context across turns.\n"
@@ -211,6 +220,57 @@ async function main() {
         } else {
           const file = saveSession(messages);
           console.log(`\x1b[32mSession saved: ${file}\x1b[0m\n`);
+        }
+        prompt();
+        return;
+      }
+
+      if (input === "/evidence list") {
+        const findings = listFindings();
+        if (findings.length === 0) {
+          console.log("\x1b[33mNo evidence recorded yet.\x1b[0m\n");
+        } else {
+          console.log(`\n\x1b[33mRecorded Findings (${findings.length}):\x1b[0m`);
+          findings.forEach((f, i) => {
+            const sev = f.severity.toUpperCase();
+            const color =
+              f.severity === "critical" || f.severity === "high"
+                ? "\x1b[31m"
+                : f.severity === "medium"
+                ? "\x1b[33m"
+                : "\x1b[32m";
+            console.log(
+              `  ${i + 1}. ${color}[${sev}]\x1b[0m ${f.title} — ${f.status} — ${f.scope || "no scope"}`
+            );
+            console.log(`     Logged: ${f.logged_at}  ID: ${f.id}`);
+          });
+          console.log();
+        }
+        prompt();
+        return;
+      }
+
+      if (input.startsWith("/evidence ")) {
+        const raw = input.slice("/evidence ".length).trim();
+        let record;
+        try {
+          record = JSON.parse(raw);
+        } catch {
+          console.error(
+            '\x1b[31mUsage: /evidence {"title":"...","severity":"high|medium|low|critical|info",' +
+              '"scope":"...","evidence":"...","status":"confirmed|likely|potential|informational|unconfirmed"}\x1b[0m\n'
+          );
+          prompt();
+          return;
+        }
+        try {
+          const { filename, entry } = logFinding(record);
+          console.log(`\x1b[32mFinding recorded: ${filename}\x1b[0m`);
+          console.log(
+            `  Title: ${entry.title}  Severity: ${entry.severity.toUpperCase()}  Status: ${entry.status}\n`
+          );
+        } catch (err) {
+          console.error(`\x1b[31mEvidence error: ${err.message}\x1b[0m\n`);
         }
         prompt();
         return;
