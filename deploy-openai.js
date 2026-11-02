@@ -1,10 +1,11 @@
 const OpenAI = require("openai");
 const fs = require("fs");
+const path = require("path");
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 async function deploy() {
-  const prompt = fs.readFileSync("SYSTEM_PROMPT.md", "utf8");
+  const prompt = fs.readFileSync(path.join(__dirname, "SYSTEM_PROMPT.md"), "utf8");
   
   const assistant = await openai.beta.assistants.create({
     name: "BugBountyPro v2.0",

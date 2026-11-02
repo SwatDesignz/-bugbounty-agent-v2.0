@@ -23,6 +23,14 @@ const VALID_STATUSES = ["confirmed", "likely", "potential", "informational", "un
 
 let _counter = 0;
 
+// Dependency-injected directory so tests (and other callers) can redirect
+// storage without reaching into module internals.
+let _evidenceDir = EVIDENCE_DIR;
+
+function setEvidenceDir(dir) {
+  _evidenceDir = dir;
+}
+
 /**
  * Log a vulnerability finding to disk.
  *
@@ -59,7 +67,7 @@ function logFinding(record) {
     );
   }
 
-  ensureEvidenceDir();
+  ensureEvidenceDir(_evidenceDir);
 
   const entry = {
     id: `finding-${Date.now()}-${++_counter}`,
@@ -71,7 +79,7 @@ function logFinding(record) {
     logged_at: new Date().toISOString(),
   };
 
-  const filename = path.join(EVIDENCE_DIR, `${entry.id}.json`);
+  const filename = path.join(_evidenceDir, `${entry.id}.json`);
   fs.writeFileSync(filename, JSON.stringify(entry, null, 2));
   return { filename, entry };
 }
@@ -82,16 +90,16 @@ function logFinding(record) {
  * @returns {object[]}
  */
 function listFindings() {
-  if (!fs.existsSync(EVIDENCE_DIR)) {
+  if (!fs.existsSync(_evidenceDir)) {
     return [];
   }
 
   return fs
-    .readdirSync(EVIDENCE_DIR)
+    .readdirSync(_evidenceDir)
     .filter((f) => f.endsWith(".json"))
     .map((f) => {
       try {
-        return JSON.parse(fs.readFileSync(path.join(EVIDENCE_DIR, f), "utf8"));
+        return JSON.parse(fs.readFileSync(path.join(_evidenceDir, f), "utf8"));
       } catch {
         return null;
       }
@@ -100,15 +108,22 @@ function listFindings() {
     .sort((a, b) => a.logged_at.localeCompare(b.logged_at));
 }
 
-function ensureEvidenceDir() {
-  if (!fs.existsSync(EVIDENCE_DIR)) {
-    fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
+function ensureEvidenceDir(dir = EVIDENCE_DIR) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
+}
+
+function resetEvidenceDir() {
+  _evidenceDir = EVIDENCE_DIR;
+  _counter = 0;
 }
 
 module.exports = {
   logFinding,
   listFindings,
+  setEvidenceDir,
+  resetEvidenceDir,
   EVIDENCE_DIR,
   VALID_SEVERITIES,
   VALID_STATUSES,

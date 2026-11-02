@@ -10,7 +10,7 @@
     "deploy": "node deploy-claude.js",
     "train:tryhackme": "node train-tryhackme.js",
     "vuln:log": "node scripts/log-finding.js",
-    "test": "node --test 'test/**/*.test.js'"
+    "test": "node --test test/"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.36.0",
